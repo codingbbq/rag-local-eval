@@ -1,0 +1,8 @@
+langchain
+langchain-community
+python-dotenv
+pypdf
+sentence-transformers
+numpy
+ollama
+faiss-cpu

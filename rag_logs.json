@@ -1,0 +1,60 @@
+[
+  {
+    "stage": "retrieval",
+    "timestamp": "2026-09-30T11:09:41.052319",
+    "query": "What are the key features of Unica Campaign?",
+    "num_docs_retrieved": 4,
+    "retrieval_scores": [
+      0.85,
+      0.85,
+      0.85,
+      0.85
+    ],
+    "max_score": 0.85,
+    "docs_preview": [
+      {
+        "content": "UNICA CAMPAIGN OVERVIEW\n\nUnica Campaign is a marketing automation platform with these key features:\n\n1. Visual Campaign Designer\n   - Drag-and-drop workflow builder\n   - Pre-built components for email",
+        "score": 0.85
+      },
+      {
+        "content": "UNICA CAMPAIGN BEST PRACTICES\n\nCAMPAIGN DESIGN BEST PRACTICES\n\n1. Define Clear KPIs\n   - Choose primary KPI: Conversion, CTR, Engagement?\n   - Set target metrics\n   - Measure for full campaign duratio",
+        "score": 0.85
+      },
+      {
+        "content": "2. Segment to Avoid Fatigue\n   - Track contact frequency across all campaigns\n   - Set maximum email caps (e.g., 5 per week)\n   - Create do-not-mail lists\n   - Use preference centers\n\n3. Respect Prefe",
+        "score": 0.85
+      },
+      {
+        "content": "Issue: High Bounce Rates\nSolutions:\n- Validate email lists\n- Only send to active subscribers\n- Configure SPF/DKIM\n- Implement gradual ramp-up\n\nIssue: Unsubscribe Spikes\nSolutions:\n- Review message rel",
+        "score": 0.85
+      }
+    ]
+  },
+  {
+    "stage": "generation",
+    "timestamp": "2026-09-30T11:09:57.666743",
+    "model": "llama2-local",
+    "context_length": 3229,
+    "answer_length": 746,
+    "tokens_estimate": 1114,
+    "answer_preview": "The key features of Unica Campaign, according to the provided context, are:\n\n1. Visual Campaign Designer: A drag-and-drop workflow builder that allows users to create and design campaigns visually.\n2. Audience Segmentation: Dynamic segments based on behavior and data, with real-time segment updates "
+  },
+  {
+    "stage": "evaluation",
+    "timestamp": "2026-09-30T11:09:57.667787",
+    "metric": "faithfulness",
+    "score": 0.8737864077669902
+  },
+  {
+    "stage": "evaluation",
+    "timestamp": "2026-09-30T11:09:57.668066",
+    "metric": "answer_relevancy",
+    "score": 0.8666666666666667
+  },
+  {
+    "stage": "evaluation",
+    "timestamp": "2026-09-30T11:09:57.668261",
+    "metric": "context_precision",
+    "score": 0.5
+  }
+]

@@ -1,0 +1,31 @@
+UNICA CAMPAIGN OVERVIEW
+
+Unica Campaign is a marketing automation platform with these key features:
+
+1. Visual Campaign Designer
+   - Drag-and-drop workflow builder
+   - Pre-built components for email, SMS, push
+   - Version control and campaign history
+
+2. Audience Segmentation
+   - Dynamic segments based on behavior and data
+   - Real-time segment updates
+   - Nested segments for advanced targeting
+
+3. Multi-Channel Orchestration
+   - Email marketing with personalization
+   - SMS and push notifications
+   - Web and social media integration
+
+4. Real-Time Analytics
+   - Campaign performance dashboard
+   - Conversion tracking
+   - ROI calculation per campaign
+
+CAMPAIGN ARCHITECTURE
+A campaign consists of:
+- Entry: How contacts enter (batch, trigger, manual)
+- Actions: What to do (send message, update profile)
+- Decisions: Business logic (did they open? Are they premium?)
+- Wait: Pause for time (wait 3 days, wait until Monday)
+- Exit: When to remove from campaign

@@ -1,0 +1,53 @@
+# ==========================================
+# 1. Python & Virtual Environments
+# ==========================================
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# ==========================================
+# 2. Vector Databases & Local Databases
+# ==========================================
+# ChromaDB persistence folders & SQLite databases
+chroma_db/
+.chroma/
+*.sqlite3
+faiss_index/
+vector_store/
+
+# ==========================================
+# 3. API Keys & Secrets
+# ==========================================
+.env
+.env.local
+*.pem
+*.key
+
+# ==========================================
+# 4. Large Documents & Datasets
+# ==========================================
+# Raw manuals and generated evaluation logs/exports
+*.pdf
+data/
+eval_results/
+*.log
+
+# ==========================================
+# 5. Neovim & Vim Editor Files
+# ==========================================
+*.swp
+*.swo
+*~
+.netrwhist
+
+# ==========================================
+# 6. Operating System Files
+# ==========================================
+.DS_Store
+Thumbs.db
