@@ -1,8 +1,13 @@
-from document_processor import DocumentProcessor
-from embedding_store import EmbeddingStore
-from rag_chain import RAGChain
-from evaluator import RAGEvaluator
-from instrumentation import RAGInstrument
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from app.core.document_processor import DocumentProcessor
+from app.config import settings
+from app.core.embedding_store import EmbeddingStore
+from app.core.rag_chain import RAGChain
+from app.core.evaluator import RAGEvaluator
+from app.core.instrumentation import RAGInstrument
 
 print("="*70)
 print("FULL RAG + EVALUATION PIPELINE TEST")
@@ -10,7 +15,7 @@ print("="*70)
 
 # Setup
 processor = DocumentProcessor(chunk_size=1000, chunk_overlap=200)
-files = ["unica_overview.txt", "unica_best_practices.txt"]
+files = [str(settings.DATA_DIR / "unica_overview.txt"), str(settings.DATA_DIR / "unica_best_practices.txt")]
 documents = processor.load_documents(files)
 
 store = EmbeddingStore()

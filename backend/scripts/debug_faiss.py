@@ -1,10 +1,17 @@
-from document_processor import DocumentProcessor
-from embedding_store import EmbeddingStore
+import sys
+from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+    
+from app.core.document_processor import DocumentProcessor
+from app.core.embedding_store import EmbeddingStore
+from app.config import settings
 import numpy as np
 
 # Setup
 processor = DocumentProcessor(chunk_size=1000, chunk_overlap=200)
-files = ["unica_overview.txt", "unica_best_practices.txt"]
+files = [str(settings.DATA_DIR / "unica_overview.txt"), str(settings.DATA_DIR / "unica_best_practices.txt")]
 documents = processor.load_documents(files)
 chunks = processor.chunk_documents(documents)
 

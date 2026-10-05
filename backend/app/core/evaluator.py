@@ -1,6 +1,6 @@
 from typing import Dict
 from langchain_community.llms import Ollama
-from instrumentation import RAGInstrument
+from app.core.instrumentation import RAGInstrument
 import re
 
 class RAGEvaluator:

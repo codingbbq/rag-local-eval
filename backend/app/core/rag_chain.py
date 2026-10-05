@@ -1,7 +1,7 @@
 from typing import Dict, Any, List
 from langchain_community.llms import Ollama
 from langchain_core.documents import Document
-from instrumentation import RAGInstrument
+from app.core.instrumentation import RAGInstrument
 
 class RAGChain:
     """

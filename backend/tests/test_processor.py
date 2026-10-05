@@ -1,10 +1,15 @@
-from document_processor import DocumentProcessor
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from app.core.document_processor import DocumentProcessor
+from app.config import settings
 
 # Initialize processor with default chunk size
 processor = DocumentProcessor(chunk_size=1000, chunk_overlap=200)
 
 # Load the documents you created earlier
-files = ["unica_overview.txt", "unica_best_practices.txt"]
+files = [str(settings.DATA_DIR / "unica_overview.txt"), str(settings.DATA_DIR / "unica_best_practices.txt")]
 documents = processor.load_documents(files)
 
 # Chunk them

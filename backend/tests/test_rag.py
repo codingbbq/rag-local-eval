@@ -1,7 +1,12 @@
-from document_processor import DocumentProcessor
-from embedding_store import EmbeddingStore
-from rag_chain import RAGChain
-from instrumentation import RAGInstrument
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from app.core.document_processor import DocumentProcessor
+from app.core.embedding_store import EmbeddingStore
+from app.core.rag_chain import RAGChain
+from app.core.instrumentation import RAGInstrument
+from app.config import settings
 
 print("="*70)
 print("SETTING UP RAG PIPELINE")
@@ -10,7 +15,7 @@ print("="*70)
 # Step 1: Load and chunk documents
 print("\n[1/5] Loading documents...")
 processor = DocumentProcessor(chunk_size=1000, chunk_overlap=200)
-files = ["unica_overview.txt", "unica_best_practices.txt"]
+files = [str(settings.DATA_DIR / "unica_overview.txt"), str(settings.DATA_DIR / "unica_best_practices.txt")]
 documents = processor.load_documents(files)
 
 # Step 2: Create embeddings
