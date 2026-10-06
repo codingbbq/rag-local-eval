@@ -1,0 +1,63 @@
+.metrics-container {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.metrics-container h3 {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metric-item label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.metric-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.metric-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.metric-value {
+  font-size: 13px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.metric-item.overall {
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.overall-score {
+  font-size: 32px;
+  font-weight: 700;
+  color: #667eea;
+}
