@@ -14,11 +14,12 @@ class EvaluationScore(BaseModel):
     overall: float
 
 class QueryResponse(BaseModel):
-    """RAG response"""
+    """RAG response with theme checking"""
     query: str
     answer: str
     num_docs_retrieved: int
     tokens_used: int
+    is_on_topic: bool  # NEW - indicates if query was on-topic
     evaluation: EvaluationScore
 
 class HealthResponse(BaseModel):
