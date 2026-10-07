@@ -50,12 +50,14 @@ class RAGChain:
                 for i, doc in enumerate(retrieved_docs[:3]):
                     debug_logger.info(f"  Doc {i+1}: {doc.page_content[:100]}...")
             
+            # Extract similarity scores from metadata
+            scores = [
+                float(doc.metadata.get('score', 0.0))
+                for doc in retrieved_docs
+            ]
+
             # Log retrieval
-            self.instrument.log_retrieval(
-                query=query,
-                num_docs=len(retrieved_docs),
-                doc_ids=[doc.metadata.get('id', 'unknown') for doc in retrieved_docs]
-            )
+            self.instrument.log_retrieval(query, retrieved_docs, scores, top_k)
             
             # Build context from retrieved documents
             context = "\n\n".join([
@@ -90,11 +92,11 @@ class RAGChain:
                 debug_logger.info(f"✓ Received answer (length: {len(answer)} chars)")
                 debug_logger.info(f"  First 100 chars: {answer[:100]}...")
             
-            # Log generation
+            # Log generation with correct parameters
             self.instrument.log_generation(
-                query=query,
+                context=context,
                 answer=answer,
-                num_docs=len(retrieved_docs),
+                model="llama2",
                 tokens_used=len(answer.split())
             )
             
