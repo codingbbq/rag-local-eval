@@ -1,4 +1,5 @@
 import React from 'react';
+import MarkdownContent from './MarkdownContent';
 import '../styles/MessageList.css';
 
 function MessageList({ messages }) {
@@ -10,7 +11,11 @@ function MessageList({ messages }) {
           className={`message message-${message.type}`}
         >
           <div className="message-content">
-            <p>{message.text}</p>
+            {message.type === 'assistant' ? (
+              <MarkdownContent content={message.text} />
+            ) : (
+              <p>{message.text}</p>
+            )}
           </div>
           <span className="message-time">
             {message.timestamp.toLocaleTimeString([], { 
