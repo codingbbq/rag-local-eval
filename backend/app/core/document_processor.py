@@ -1,121 +1,83 @@
 from typing import List
+from pathlib import Path
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader, PyPDFLoader
 from langchain_core.documents import Document
 
 class DocumentProcessor:
-    """
-    Loads documents and splits them into chunks.
-    
-    Why a class?
-    - Reusable: create once, use many times
-    - State: remembers chunk_size and chunk_overlap
-    - Methods: separate concerns (load vs chunk)
-    """
-    
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
-        """
-        Initialize the processor with chunk parameters.
-        
-        Args:
-            chunk_size: How many characters per chunk (default 1000)
-            chunk_overlap: How many chars to repeat in next chunk (default 200)
-        
-        Why these defaults?
-        - 1000 chars ≈ 150-200 words ≈ 250 tokens
-        - 200 chars overlap ≈ 30 words (ensures context continuity)
-        """
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-        
-        # Create the splitter with recursive strategy
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            separators=["\n\n", "\n", " ", ""]  # Order matters!
+            separators=["\n## ", "\n### ", "\n\n", "\n", " ", ""]
         )
-        
-        print(f"✓ DocumentProcessor initialized")
-        print(f"  • chunk_size: {chunk_size} chars")
-        print(f"  • chunk_overlap: {chunk_overlap} chars")
-
-
     
-
     def load_documents(self, file_paths: List[str]) -> List[Document]:
         """
-        Load documents from TXT files.
+        Load documents from various file types
         
         Args:
-            file_paths: List of file paths to load
-                Example: ["doc1.txt", "doc2.txt"]
-        
+            file_paths: List of file paths (supports .txt, .pdf, .md)
+            
         Returns:
-            List of Document objects with content and metadata
-        
-        Note: For PDF, use PyPDFLoader instead of TextLoader
+            List of Document objects
         """
         documents = []
         
         for file_path in file_paths:
-            print(f"\n📄 Loading {file_path}...")
+            path = Path(file_path)
             
-            try:
-                # TextLoader reads the entire file as one document
-                loader = TextLoader(file_path)
-                docs = loader.load()
-                documents.extend(docs)  # Add to our list
-                print(f"   ✓ Loaded {len(docs)} document(s)")
-                
-            except Exception as e:
-                print(f"   ❌ Error: {e}")
-                continue
+            if not path.exists():
+                raise FileNotFoundError(f"File not found: {file_path}")
+            
+            # Load based on file extension
+            if path.suffix.lower() == '.pdf':
+                loader = PyPDFLoader(str(path))
+            elif path.suffix.lower() in ['.txt', '.md']:
+                loader = TextLoader(str(path), encoding='utf-8')
+            else:
+                raise ValueError(f"Unsupported file type: {path.suffix}")
+            
+            docs = loader.load()
+            documents.extend(docs)
+            print(f"📄 Loaded {path.name}: {len(docs)} pages")
         
-        total_chars = sum(len(d.page_content) for d in documents)
-        print(f"\n✓ Loaded {len(documents)} documents ({total_chars} chars total)")
         return documents
-
-
-    def chunk_documents(self, documents: List[Document]) -> List[Document]:
+    
+    def chunk_documents(self, documents: List[Document], 
+                       chunk_size: int = None, 
+                       chunk_overlap: int = None) -> List[Document]:
         """
-        Split documents into smaller chunks.
+        Split documents into chunks
         
         Args:
-            documents: List of Document objects (from load_documents)
-        
+            documents: List of documents
+            chunk_size: Override chunk size
+            chunk_overlap: Override chunk overlap
+            
         Returns:
-            List of chunks (each chunk is a Document)
-        
-        Why return List[Document]?
-        - Each chunk needs metadata (which file it came from)
-        - Document objects preserve this info
+            List of chunked documents
         """
-        print(f"\n🔪 Chunking {len(documents)} document(s)...")
-        print(f"   Parameters: chunk_size={self.chunk_size}, overlap={self.chunk_overlap}")
+        if chunk_size:
+            self.chunk_size = chunk_size
+        if chunk_overlap:
+            self.chunk_overlap = chunk_overlap
         
-        # Use the splitter to break documents into chunks
+        # Recreate splitter with new settings
+        self.splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap,
+            separators=["\n## ", "\n### ", "\n\n", "\n", " ", ""]
+        )
+        
         chunks = self.splitter.split_documents(documents)
-        
-        print(f"   ✓ Created {len(chunks)} chunks")
-        
-        # Show statistics
-        chunk_sizes = [len(c.page_content) for c in chunks]
-        print(f"\n   📊 Chunk Statistics:")
-        print(f"      • Smallest: {min(chunk_sizes)} chars")
-        print(f"      • Largest: {max(chunk_sizes)} chars")
-        print(f"      • Average: {sum(chunk_sizes)//len(chunk_sizes)} chars")
-        
+        print(f"🔪 Created {len(chunks)} chunks")
         return chunks
-
-    def preview_chunk(self, chunk: Document, index: int = 0):
-        """
-        Print a preview of a single chunk (useful for debugging).
-        
-        Args:
-            chunk: The Document chunk to preview
-            index: Which chunk number (for display)
-        """
-        print(f"\n📝 Chunk {index} Preview:")
-        print(f"   Size: {len(chunk.page_content)} chars")
-        print(f"   Content:")
-        print(f"   {chunk.page_content[:300]}...")  # First 300 chars
+    
+    def preview_chunk(self, chunks: List[Document], index: int = 0) -> str:
+        """Preview a specific chunk"""
+        if index >= len(chunks):
+            return "Index out of range"
+        return chunks[index].page_content

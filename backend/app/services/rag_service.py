@@ -23,7 +23,7 @@ class RAGService:
         """Load FAISS index and create RAG chain"""
         debug_logger.info("Loading FAISS index...")
         self.embedding_store.load_vectorstore(str(settings.FAISS_INDEX_PATH))
-        retriever = self.embedding_store.get_retriever(k=settings.RETRIEVE_K)
+        retriever = self.embedding_store.get_retriever(k=settings.DEFAULT_RETRIEVE_K)
         self.rag_chain = RAGChain(
             retriever, 
             self.instrument,

@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import './styles/App.css';
 import Chat from './components/Chat';
+import UploadPage from './pages/UploadPage';
 
 function App() {
+    const [currentPage, setCurrentPage] = useState('chat'); // 'chat' or 'upload'
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -15,7 +17,6 @@ function App() {
     const [metrics, setMetrics] = useState(null);
 
     const handleSendMessage = async (userMessage) => {
-        // Add user message
         const newUserMessage = {
             id: messages.length + 1,
             type: 'user',
@@ -27,7 +28,6 @@ function App() {
         setLoading(true);
 
         try {
-            // Call backend API
             const response = await fetch('http://localhost:8000/api/v1/query', {
                 method: 'POST',
                 headers: {
@@ -45,14 +45,13 @@ function App() {
 
             const data = await response.json();
 
-            // Add assistant message
             const newAssistantMessage = {
                 id: messages.length + 2,
                 type: 'assistant',
                 text: data.answer,
                 timestamp: new Date(),
                 metrics: data.evaluation,
-                is_on_topic: data.is_on_topic  // NEW - add this
+                is_on_topic: data.is_on_topic
             };
 
             setMessages(prev => [...prev, newAssistantMessage]);
@@ -75,17 +74,34 @@ function App() {
     return (
         <div className="app">
             <header className="app-header">
-                <h1>RAG Chat</h1>
+                <h1>🤖 RAG Chat System</h1>
                 <p>Document Question Answering with Evaluation</p>
+                <nav className="header-nav">
+                    <button
+                        className={`nav-btn ${currentPage === 'chat' ? 'active' : ''}`}
+                        onClick={() => setCurrentPage('chat')}
+                    >
+                        💬 Chat
+                    </button>
+                    <button
+                        className={`nav-btn ${currentPage === 'upload' ? 'active' : ''}`}
+                        onClick={() => setCurrentPage('upload')}
+                    >
+                        📚 Upload
+                    </button>
+                </nav>
             </header>
 
             <main className="app-main">
-                <Chat
-                    messages={messages}
-                    loading={loading}
-                    onSendMessage={handleSendMessage}
-                    metrics={metrics}
-                />
+                {currentPage === 'chat' && (
+                    <Chat
+                        messages={messages}
+                        loading={loading}
+                        onSendMessage={handleSendMessage}
+                        metrics={metrics}
+                    />
+                )}
+                {currentPage === 'upload' && <UploadPage />}
             </main>
         </div>
     );

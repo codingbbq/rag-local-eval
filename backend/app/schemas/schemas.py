@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class QueryRequest(BaseModel):
     """User query request"""
@@ -26,3 +26,25 @@ class HealthResponse(BaseModel):
     """Health check response"""
     status: str
     vectors_in_index: int
+
+class ProcessingSettings(BaseModel):
+    """Document processing settings"""
+    chunk_size: Optional[int] = 1000
+    chunk_overlap: Optional[int] = 200
+    retrieve_k: Optional[int] = 5
+
+class UploadResponse(BaseModel):
+    """Response after file upload"""
+    files_uploaded: int
+    file_names: List[str]
+    total_size_mb: float
+    ready_to_process: bool
+
+class ProcessResponse(BaseModel):
+    """Response after processing documents"""
+    status: str
+    documents_processed: int
+    chunks_created: int
+    embeddings_created: int
+    total_vectors_in_index: int
+    message: str

@@ -24,10 +24,17 @@ class Settings:
     OLLAMA_MODEL = "llama2"
 
     # RAG
+    DEFAULT_CHUNK_SIZE = 1000
+    DEFAULT_CHUNK_OVERLAP = 200
+    DEFAULT_RETRIEVE_K = 5
 
-    CHUNK_SIZE = 1000
-    CHUNK_OVERLAP = 200
-    RETRIEVE_K = 5
+    # Upload Settings
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+    ALLOWED_EXTENSIONS = {".txt", ".pdf", ".md", ".docx"}
+    UPLOAD_DIR = BASE_DIR / "uploads"
+
+    # Ensure upload directory exists
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     # Theme/Topic Settings
     SYSTEM_THEME = "Unica Campaign"
