@@ -23,8 +23,33 @@ function Chat({ messages, loading, onSendMessage, metrics }) {
     }
   }, [messages]);
 
+  const handleClearChat = async () => {
+    if (window.confirm('Clear entire conversation?')) {
+      try {
+        await fetch('http://localhost:8000/api/v1/conversation/clear', {
+          method: 'DELETE'
+        });
+        // Reset frontend
+        window.location.reload();
+      } catch (error) {
+        console.error('Error clearing conversation:', error);
+      }
+    }
+  };
+
   return (
     <div className="chat-container">
+      <div className="chat-header">
+        <div className="chat-info">
+          <span className="turn-counter">
+            Turn: {Math.ceil((messages.length - 1) / 2)}
+          </span>
+        </div>
+        <button className="clear-btn" onClick={handleClearChat}>
+          🗑️ Clear Chat
+        </button>
+      </div>
+
       <div className="chat-content">
         <MessageList messages={messages} />
         <div ref={messagesEndRef} />

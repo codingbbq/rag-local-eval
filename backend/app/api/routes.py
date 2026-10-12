@@ -114,3 +114,20 @@ async def clear_uploads():
     debug_logger.info("🗑️  Clearing uploaded files")
     upload_service.clear_uploads()
     return {"status": "cleared"}
+
+
+@router.delete("/conversation/clear")
+async def clear_conversation():
+    """Clear conversation history"""
+    debug_logger.info("🗑️ Clearing conversation")
+    rag_service.clear_conversation()
+    return {"status": "cleared"}
+
+@router.get("/conversation/history")
+async def get_conversation_history():
+    """Get conversation history"""
+    history = rag_service.get_conversation_history()
+    return {
+        "history": history,
+        "turns": len(history) // 2
+    }

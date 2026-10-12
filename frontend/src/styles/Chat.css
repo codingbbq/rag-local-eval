@@ -10,6 +10,46 @@
   overflow: hidden;
 }
 
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chat-info {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.turn-counter {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.clear-btn {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.clear-btn:hover {
+  background: #fecaca;
+  border-color: #f87171;
+}
+
 .chat-content {
   flex: 1;
   overflow-y: auto;

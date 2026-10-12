@@ -1,3 +1,4 @@
+from app.services.conversation_service import conversation_service
 from app.core.document_processor import DocumentProcessor
 from app.core.embedding_store import EmbeddingStore
 from app.core.rag_chain import RAGChain
@@ -48,13 +49,22 @@ class RAGService:
         max_score = max(scores) if scores else 0
         return max_score >= settings.SIMILARITY_THRESHOLD
     
-    def query(self, user_query: str, top_k: int = 5):
+    
+    def query(self, user_query: str, top_k: int = 5, use_history: bool = True):
         """
-        Process user query with theme-based filtering.
-        Returns answer with evaluation metrics.
+        Process query with conversation history
+        
+        Args:
+            user_query: New question from user
+            top_k: Number of documents to retrieve
+            use_history: Whether to include conversation history
+            
+        Returns:
+            Response with answer and metadata
         """
         if logger.is_debug_enabled():
             debug_logger.info(f"📨 Query received: {user_query}")
+            debug_logger.info(f"📚 Conversation history turns: {len(conversation_service.history)}")
         
         if not self.rag_chain:
             debug_logger.error("❌ RAG chain not initialized")
@@ -69,14 +79,16 @@ class RAGService:
             
             if logger.is_debug_enabled():
                 debug_logger.info(f"✓ Retrieved {result.get('num_docs_retrieved')} documents")
-                debug_logger.info(f"Answer length: {len(result.get('answer', ''))} chars")
             
-            # Check if retrieved docs are relevant
             num_docs = result.get("num_docs_retrieved", 0)
             
             if num_docs == 0:
                 if logger.is_debug_enabled():
-                    debug_logger.warning("⚠️  No relevant documents found - likely off-topic")
+                    debug_logger.warning("⚠️ No relevant documents found - likely off-topic")
+                
+                # Add to history
+                conversation_service.add_message('user', user_query)
+                conversation_service.add_message('assistant', settings.OFF_TOPIC_RESPONSE)
                 
                 return {
                     "query": user_query,
@@ -84,6 +96,7 @@ class RAGService:
                     "num_docs_retrieved": 0,
                     "tokens_used": 0,
                     "is_on_topic": False,
+                    "conversation_turn": len(conversation_service.history) // 2,
                     "evaluation": {
                         "faithfulness": 0.0,
                         "answer_relevancy": 0.0,
@@ -103,7 +116,13 @@ class RAGService:
             )
             
             if logger.is_debug_enabled():
-                debug_logger.info(f"Evaluation scores - Overall: {scores['overall']:.2f}, Faithfulness: {scores['faithfulness']:.2f}, Relevancy: {scores['answer_relevancy']:.2f}")
+                debug_logger.info(
+                    f"Evaluation scores - Overall: {scores['overall']:.2f}"
+                )
+            
+            # Add to conversation history
+            conversation_service.add_message('user', user_query)
+            conversation_service.add_message('assistant', result["answer"])
             
             response = {
                 "query": result["query"],
@@ -111,6 +130,7 @@ class RAGService:
                 "num_docs_retrieved": result["num_docs_retrieved"],
                 "tokens_used": result["tokens_used"],
                 "is_on_topic": True,
+                "conversation_turn": len(conversation_service.history) // 2,
                 "evaluation": {
                     "faithfulness": scores["faithfulness"],
                     "answer_relevancy": scores["answer_relevancy"],
@@ -127,6 +147,15 @@ class RAGService:
         except Exception as e:
             debug_logger.error(f"❌ Error processing query: {str(e)}", exc_info=True)
             raise
+
+    def clear_conversation(self):
+        """Clear conversation history"""
+        conversation_service.clear_history()
+        debug_logger.info("Cleared conversation")
+
+    def get_conversation_history(self):
+        """Get conversation history"""
+        return conversation_service.export_history()
     
     def get_stats(self):
         """Get system statistics"""
