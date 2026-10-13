@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './styles/App.css';
 import Chat from './components/Chat';
 import UploadPage from './pages/UploadPage';
@@ -15,6 +15,39 @@ function App() {
     ]);
     const [loading, setLoading] = useState(false);
     const [metrics, setMetrics] = useState(null);
+
+    // Load conversation history on page load
+    useEffect(() => {
+        const loadConversationHistory = async () => {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/conversation/history');
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (data.history && data.history.length > 0) {
+                        // Convert backend history to frontend messages
+                        const loadedMessages = data.history.map((msg, idx) => ({
+                            id: idx + 2,
+                            type: msg.role === 'user' ? 'user' : 'assistant',
+                            text: msg.content,
+                            timestamp: new Date(msg.timestamp)
+                        }));
+
+                        // Prepend welcome message and loaded history
+                        setMessages([messages[0], ...loadedMessages]);
+                        console.log(`📚 Loaded ${loadedMessages.length} messages from backend`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading conversation history:', error);
+            }
+        };
+
+        // Only load on initial page load
+        if (messages.length === 1) {
+            loadConversationHistory();
+        }
+    }, []); // Empty dependency array = run once on mount
 
     const handleSendMessage = async (userMessage) => {
         const newUserMessage = {
