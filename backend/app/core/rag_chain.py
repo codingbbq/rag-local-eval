@@ -5,6 +5,7 @@ from app.core.instrumentation import RAGInstrument
 from app.utils.logger import logger
 from app.services.rerank_service import get_reranker
 from app.config import settings
+from app.services.hybrid_search_service import hybrid_search_service
 
 debug_logger = logger.get_logger(__name__)
 
@@ -52,14 +53,18 @@ class RAGChain:
                 debug_logger.info(f"🔄 Starting RAG chain (reranking: {use_reranking})")
             
             # Stage 1: RECALL - Retrieve more documents than needed
-            # Get 3x more documents so reranking can pick the best
-            # Then in generate_answer:
             retrieval_k = top_k * settings.RERANKER_RETRIEVAL_MULTIPLIER if use_reranking else top_k
-            
+
             if logger.is_debug_enabled():
-                debug_logger.info(f"🔍 Stage 1 RECALL: Retrieving {retrieval_k} documents...")
-            
-            retrieved_docs = self.retriever.invoke(query)[:retrieval_k]
+                debug_logger.info(f"🔍 Stage 1 RECALL: Hybrid search for {retrieval_k} documents...")
+
+            # Use hybrid search instead of just FAISS
+            hybrid_results = hybrid_search_service.hybrid_search(query, top_k=retrieval_k)
+            retrieved_docs = [item['doc'] for item in hybrid_results]
+
+            if logger.is_debug_enabled():
+                debug_logger.info(f"✓ Hybrid search retrieved {len(retrieved_docs)} documents")
+                debug_logger.info(f"  Methods: {[item['method'] for item in hybrid_results[:3]]}")
             
             if logger.is_debug_enabled():
                 debug_logger.info(f"✓ Retrieved {len(retrieved_docs)} documents")

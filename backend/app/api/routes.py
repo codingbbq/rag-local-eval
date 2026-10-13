@@ -131,3 +131,14 @@ async def get_conversation_history():
         "history": history,
         "turns": len(history) // 2
     }
+
+@router.get("/debug/bm25-status")
+async def debug_bm25_status():
+    """Check if BM25 is initialized"""
+    from app.services.hybrid_search_service import hybrid_search_service
+    
+    return {
+        "bm25_initialized": hybrid_search_service.bm25 is not None,
+        "documents_loaded": len(hybrid_search_service.documents) if hybrid_search_service.documents else 0,
+        "documents_text_loaded": len(hybrid_search_service.documents_text) if hybrid_search_service.documents_text else 0
+    }

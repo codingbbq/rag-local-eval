@@ -28,6 +28,10 @@ class Settings:
     RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-12-v2"
     RERANKER_RETRIEVAL_MULTIPLIER = 3  # Retrieve 3x docs, then rerank to top-k
 
+    # Hybrid Search Settings
+    USE_HYBRID_SEARCH = True  # Enable/disable hybrid search
+    HYBRID_RETRIEVAL_K = 15   # Get 15 docs from hybrid, then rerank to top-5
+
     # RAG
     DEFAULT_CHUNK_SIZE = 1000
     DEFAULT_CHUNK_OVERLAP = 200
