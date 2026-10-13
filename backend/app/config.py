@@ -21,7 +21,12 @@ class Settings:
 
     # Ollama
     OLLAMA_BASE_URL = "http://localhost:11434"
-    OLLAMA_MODEL = "llama2"
+    OLLAMA_MODEL = "mistral"
+
+    # Reranking Settings
+    USE_RERANKING = True  # Enable/disable reranking
+    RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-12-v2"
+    RERANKER_RETRIEVAL_MULTIPLIER = 3  # Retrieve 3x docs, then rerank to top-k
 
     # RAG
     DEFAULT_CHUNK_SIZE = 1000
