@@ -1,50 +1,138 @@
+/* ============================================
+   ENTERPRISE INPUT BOX STYLES
+   ============================================ */
+
 .input-box {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-wrapper {
+  display: flex;
   gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid #e5e7eb;
-  background: white;
-}
-
-.input-field {
-  flex: 1;
+  align-items: flex-end;
   padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  transition: var(--transition);
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.input-textarea {
+  flex: 1;
+  border: none;
   outline: none;
-  transition: border-color 0.2s;
+  background: transparent;
+  color: var(--text-primary);
   font-family: inherit;
+  font-size: 14px;
+  line-height: 24px;
+  resize: none;
+  max-height: 120px;
+  min-height: 24px;
 }
 
-.input-field:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+.input-textarea::placeholder {
+  color: var(--text-tertiary);
 }
 
-.input-field:disabled {
-  background: #f9fafb;
-  color: #9ca3af;
+.input-textarea:disabled {
+  color: var(--text-tertiary);
+  cursor: not-allowed;
 }
 
-.send-button {
-  padding: 12px 24px;
-  background: #667eea;
+/* Send Button */
+.send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-  white-space: nowrap;
+  transition: var(--transition);
+  flex-shrink: 0;
+  font-size: 18px;
 }
 
-.send-button:hover:not(:disabled) {
-  background: #5568d3;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+.send-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-.send-button:disabled {
-  background: #d1d5db;
+.send-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+  background: var(--text-tertiary);
+}
+
+/* Help Text */
+.input-help {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px;
+  font-size: 12px;
+}
+
+.help-text {
+  color: var(--text-tertiary);
+  transition: color var(--transition);
+}
+
+.input-wrapper:focus-within ~ .input-help .help-text {
+  color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .input-wrapper {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .send-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .input-textarea {
+    font-size: 14px;
+  }
+
+  .help-text {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-wrapper {
+    padding: 8px 10px;
+  }
+
+  .send-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .input-textarea {
+    font-size: 13px;
+  }
+
+  .help-text {
+    display: none;
+  }
 }

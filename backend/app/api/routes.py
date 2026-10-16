@@ -7,6 +7,7 @@ from app.schemas.schemas import (
 from app.services.upload_service import upload_service
 from app.services.rag_service import rag_service
 from app.utils.logger import logger
+from app.services.hybrid_search_service import hybrid_search_service
 
 debug_logger = logger.get_logger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["RAG"])
@@ -135,8 +136,7 @@ async def get_conversation_history():
 @router.get("/debug/bm25-status")
 async def debug_bm25_status():
     """Check if BM25 is initialized"""
-    from app.services.hybrid_search_service import hybrid_search_service
-    
+        
     return {
         "bm25_initialized": hybrid_search_service.bm25 is not None,
         "documents_loaded": len(hybrid_search_service.documents) if hybrid_search_service.documents else 0,

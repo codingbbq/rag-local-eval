@@ -1,13 +1,10 @@
-import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import '../styles/MarkdownContent.css';
 
 function MarkdownContent({ content }) {
   return (
     <div className="markdown-content">
       <ReactMarkdown 
-        remarkPlugins={[remarkGfm]}
         components={{
           h1: ({node, ...props}) => <h1 className="md-h1" {...props} />,
           h2: ({node, ...props}) => <h2 className="md-h2" {...props} />,

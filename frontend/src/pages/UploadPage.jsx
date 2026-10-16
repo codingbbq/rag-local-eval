@@ -1,292 +1,259 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import '../styles/UploadPage.css';
 
 function UploadPage() {
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [processedInfo, setProcessedInfo] = useState(null);
-  const [error, setError] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [settings, setSettings] = useState({
-    chunk_size: 1000,
-    chunk_overlap: 200,
-    retrieve_k: 5
-  });
-  const fileInputRef = useRef(null);
-
-  const handleFileSelect = async (event) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length === 0) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      files.forEach(file => {
-        formData.append('files', file);
-      });
-
-      const response = await fetch('http://localhost:8000/api/v1/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
-      setUploadedFiles(data.file_names);
-      setError(null);
-    } catch (err) {
-      setError(`Upload error: ${err.message}`);
-    } finally {
-      setLoading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
+  const [message, setMessage] = useState(null);
+  const [chunkSize, setChunkSize] = useState(1000);
+  const [chunkOverlap, setChunkOverlap] = useState(200);
+  const [retrievalK, setRetrievalK] = useState(5);
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
+    e.stopPropagation();
   };
 
-  const handleDragLeave = (e) => {
-    e.currentTarget.classList.remove('drag-over');
-  };
-
-  const handleDrop = async (e) => {
+  const handleDrop = (e) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
+    e.stopPropagation();
     
-    const files = Array.from(e.dataTransfer.files);
-    
-    setLoading(true);
-    setError(null);
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    const validFiles = droppedFiles.filter(file => 
+      file.name.endsWith('.pdf') || 
+      file.name.endsWith('.txt') || 
+      file.name.endsWith('.md')
+    );
 
-    try {
-      const formData = new FormData();
-      files.forEach(file => {
-        formData.append('files', file);
-      });
-
-      const response = await fetch('http://localhost:8000/api/v1/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
-      setUploadedFiles(data.file_names);
-      setError(null);
-    } catch (err) {
-      setError(`Upload error: ${err.message}`);
-    } finally {
-      setLoading(false);
+    if (validFiles.length > 0) {
+      setFiles(prev => [...prev, ...validFiles]);
+      setMessage({ type: 'success', text: `Added ${validFiles.length} file(s)` });
+    } else {
+      setMessage({ type: 'error', text: 'Only PDF, TXT, and MD files are supported' });
     }
   };
 
-  const handleProcess = async () => {
-    if (uploadedFiles.length === 0) {
-      setError('No files uploaded');
+  const handleFileInput = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    if (selectedFiles.length > 0) {
+      setFiles(prev => [...prev, ...selectedFiles]);
+      setMessage({ type: 'success', text: `Added ${selectedFiles.length} file(s)` });
+    }
+  };
+
+  const removeFile = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpload = async () => {
+    if (files.length === 0) {
+      setMessage({ type: 'error', text: 'Please select files first' });
       return;
     }
 
     setLoading(true);
-    setError(null);
-    setProcessedInfo(null);
+    setMessage(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings)
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('files', file);
       });
 
-      if (!response.ok) {
+      // Upload files
+      const uploadResponse = await fetch('http://localhost:8000/api/v1/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Upload failed');
+      }
+
+      // Process uploaded files
+      const processResponse = await fetch('http://localhost:8000/api/v1/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chunk_size: parseInt(chunkSize),
+          chunk_overlap: parseInt(chunkOverlap),
+          retrieval_k: parseInt(retrievalK)
+        })
+      });
+
+      if (!processResponse.ok) {
         throw new Error('Processing failed');
       }
 
-      const data = await response.json();
-      setProcessedInfo(data);
-      setUploadedFiles([]);
-    } catch (err) {
-      setError(`Processing error: ${err.message}`);
+      setMessage({ 
+        type: 'success', 
+        text: `Successfully uploaded and processed ${files.length} file(s)` 
+      });
+      setFiles([]);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.message || 'An error occurred during upload' 
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClearUploads = async () => {
-    try {
-      await fetch('http://localhost:8000/api/v1/uploads/clear', {
+  const handleClearAll = () => {
+    if (window.confirm('Clear all uploaded files?')) {
+      fetch('http://localhost:8000/api/v1/uploads/clear', {
         method: 'DELETE'
-      });
-      setUploadedFiles([]);
-      setError(null);
-    } catch (err) {
-      setError(`Clear error: ${err.message}`);
+      })
+        .then(() => {
+          setMessage({ type: 'success', text: 'Uploads cleared' });
+        })
+        .catch(error => {
+          console.error('Clear error:', error);
+          setMessage({ type: 'error', text: 'Failed to clear uploads' });
+        });
     }
   };
 
   return (
     <div className="upload-container">
-      <div className="upload-card">
-        <h1>📚 Upload & Index Documents</h1>
-        <p className="subtitle">Add PDF or TXT files to train your RAG system</p>
+      <div className="upload-content">
+        <h1 className="upload-title">Upload Documents</h1>
+        <p className="upload-subtitle">
+          Add PDF, TXT, or MD files to your knowledge base. They'll be automatically processed and indexed.
+        </p>
 
-        {/* Upload Area */}
-        <div
-          className="upload-area"
+        {/* Messages */}
+        {message && (
+          <div className={`status-message status-${message.type}`}>
+            {message.text}
+          </div>
+        )}
+
+        {/* Drop Zone */}
+        <div 
+          className="drop-zone"
           onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
         >
-          <div className="upload-content">
-            <div className="upload-icon">📄</div>
-            <h3>Drag and drop files here</h3>
-            <p>or click to browse</p>
-            <p className="file-types">Supported: PDF, TXT</p>
+          <div className="drop-zone-content">
+            <div className="drop-zone-icon">📄</div>
+            <div className="drop-text">Drag files here or click to browse</div>
+            <div className="drop-hint">PDF, TXT, or MD files (up to 50MB each)</div>
           </div>
           <input
-            ref={fileInputRef}
             type="file"
+            className="file-input"
             multiple
             accept=".pdf,.txt,.md"
-            onChange={handleFileSelect}
-            style={{ display: 'none' }}
+            onChange={handleFileInput}
+            onClick={(e) => {
+              const input = e.target;
+              input.click();
+            }}
+            id="file-input"
           />
         </div>
 
-        {/* Uploaded Files List */}
-        {uploadedFiles.length > 0 && (
-          <div className="uploaded-files">
-            <h3>✓ Uploaded Files ({uploadedFiles.length})</h3>
-            <ul>
-              {uploadedFiles.map((file, idx) => (
-                <li key={idx}>📄 {file}</li>
-              ))}
-            </ul>
+        {/* File List */}
+        {files.length > 0 && (
+          <div className="file-list">
+            <div className="file-list-title">
+              Selected Files ({files.length})
+            </div>
+            {files.map((file, index) => (
+              <div key={index} className="file-item">
+                <div>
+                  <div className="file-name">{file.name}</div>
+                  <div className="file-size">
+                    {(file.size / 1024).toFixed(2)} KB
+                  </div>
+                </div>
+                <button
+                  className="file-remove-btn"
+                  onClick={() => removeFile(index)}
+                  title="Remove file"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Settings Section */}
-        <div className="settings-section">
-          <button
-            className="settings-toggle"
-            onClick={() => setShowSettings(!showSettings)}
-          >
-            {showSettings ? '▼' : '▶'} Advanced Settings
-          </button>
+        {/* Settings */}
+        <div className="upload-settings">
+          <div className="settings-title">⚙️ Processing Settings</div>
 
-          {showSettings && (
-            <div className="settings-panel">
-              <div className="setting-item">
-                <label>Chunk Size (characters)</label>
-                <input
-                  type="number"
-                  value={settings.chunk_size}
-                  onChange={(e) =>
-                    setSettings({ ...settings, chunk_size: parseInt(e.target.value) })
-                  }
-                  min="100"
-                  max="5000"
-                />
-                <small>Recommended: 500-1500</small>
-              </div>
-
-              <div className="setting-item">
-                <label>Chunk Overlap (characters)</label>
-                <input
-                  type="number"
-                  value={settings.chunk_overlap}
-                  onChange={(e) =>
-                    setSettings({ ...settings, chunk_overlap: parseInt(e.target.value) })
-                  }
-                  min="0"
-                  max="500"
-                />
-                <small>Recommended: 100-300</small>
-              </div>
-
-              <div className="setting-item">
-                <label>Retrieval K (documents)</label>
-                <input
-                  type="number"
-                  value={settings.retrieve_k}
-                  onChange={(e) =>
-                    setSettings({ ...settings, retrieve_k: parseInt(e.target.value) })
-                  }
-                  min="1"
-                  max="20"
-                />
-                <small>Recommended: 3-10</small>
-              </div>
+          <div className="setting-group">
+            <label className="setting-label">Chunk Size</label>
+            <input
+              type="number"
+              value={chunkSize}
+              onChange={(e) => setChunkSize(e.target.value)}
+              className="setting-input"
+              min="100"
+              max="5000"
+              step="100"
+            />
+            <div className="setting-hint">
+              Size of text chunks (higher = fewer chunks, lower = more granular)
             </div>
-          )}
+          </div>
+
+          <div className="setting-group">
+            <label className="setting-label">Chunk Overlap</label>
+            <input
+              type="number"
+              value={chunkOverlap}
+              onChange={(e) => setChunkOverlap(e.target.value)}
+              className="setting-input"
+              min="0"
+              max="500"
+              step="50"
+            />
+            <div className="setting-hint">
+              Characters to overlap between chunks (helps maintain context)
+            </div>
+          </div>
+
+          <div className="setting-group">
+            <label className="setting-label">Retrieval K</label>
+            <input
+              type="number"
+              value={retrievalK}
+              onChange={(e) => setRetrievalK(e.target.value)}
+              className="setting-input"
+              min="1"
+              max="20"
+              step="1"
+            />
+            <div className="setting-hint">
+              Number of documents to retrieve per query
+            </div>
+          </div>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="error-message">
-            ❌ {error}
-          </div>
-        )}
-
-        {/* Loading State */}
-        {loading && (
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Processing documents...</p>
-            <p className="loading-details">
-              {uploadedFiles.length > 0
-                ? '📄 Creating embeddings...'
-                : '💾 Saving to FAISS index...'}
-            </p>
-          </div>
-        )}
-
-        {/* Success State */}
-        {processedInfo && (
-          <div className="success-message">
-            <h3>✅ Processing Complete!</h3>
-            <div className="success-details">
-              <p>📄 Documents processed: <strong>{processedInfo.documents_processed}</strong></p>
-              <p>🔪 Chunks created: <strong>{processedInfo.chunks_created}</strong></p>
-              <p>🧠 Embeddings created: <strong>{processedInfo.embeddings_created}</strong></p>
-              <p>💾 Total vectors in index: <strong>{processedInfo.total_vectors_in_index}</strong></p>
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
+        {/* Buttons */}
         <div className="button-group">
           <button
-            className="btn btn-primary"
-            onClick={handleProcess}
-            disabled={uploadedFiles.length === 0 || loading}
+            className="btn-primary"
+            onClick={handleUpload}
+            disabled={loading || files.length === 0}
           >
-            {loading ? '⏳ Processing...' : '🚀 Process & Index'}
+            {loading ? 'Uploading...' : 'Upload & Process'}
           </button>
-
-          {uploadedFiles.length > 0 && (
-            <button
-              className="btn btn-secondary"
-              onClick={handleClearUploads}
-              disabled={loading}
-            >
-              🗑️ Clear Files
-            </button>
-          )}
+          <button
+            className="btn-secondary"
+            onClick={handleClearAll}
+            disabled={loading}
+          >
+            Clear All
+          </button>
         </div>
       </div>
     </div>

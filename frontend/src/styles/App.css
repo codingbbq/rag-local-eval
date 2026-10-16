@@ -1,75 +1,373 @@
+/* ============================================
+   ENTERPRISE RAG CHAT UI - App.css
+   Professional, Scalable, Minimal
+   ============================================ */
+
+/* Root Variables - Enterprise Design System */
+:root {
+  /* Colors - Professional Enterprise Palette */
+  --primary: #2563eb;          /* Professional Blue */
+  --primary-dark: #1e40af;     /* Darker Blue */
+  --primary-light: #eff6ff;    /* Light Blue */
+  
+  --secondary: #64748b;        /* Slate Gray */
+  --accent: #059669;           /* Professional Green */
+  
+  --background: #f9fafb;       /* Off-white */
+  --surface: #ffffff;          /* Pure White */
+  --surface-hover: #f3f4f6;    /* Hover state */
+  
+  --text-primary: #111827;     /* Dark Gray */
+  --text-secondary: #6b7280;   /* Medium Gray */
+  --text-tertiary: #9ca3af;    /* Light Gray */
+  
+  --border: #e5e7eb;           /* Light Border */
+  --border-dark: #d1d5db;      /* Darker Border */
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.12);
+  
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Navbar height */
+  --navbar-height: 64px;
+}
+
+/* Global Styles */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif;
-    background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--background);
+  color: var(--text-primary);
 }
 
-.app {
+/* App Container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--background);
+}
+
+/* ============================================
+   NAVBAR - TOP NAVIGATION
+   ============================================ */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--navbar-height);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  z-index: 1000;
+}
+
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Logo */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.navbar-logo:hover {
+  color: var(--primary);
+}
+
+.logo-icon {
+  font-size: 24px;
+  color: var(--primary);
+}
+
+.logo-text {
+  letter-spacing: -0.5px;
+}
+
+/* Desktop Navigation Links */
+.nav-links-desktop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 48px;
+  flex: 1;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  transition: var(--transition);
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.nav-link.active {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: var(--radius-sm);
+}
+
+.nav-icon {
+  font-size: 18px;
+}
+
+/* Navbar Right Section */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+/* Clear Button */
+.clear-btn {
+  padding: 8px 16px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.clear-btn:hover {
+  background: #fecaca;
+  border-color: #f87171;
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.2);
+}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-lg);
+  transition: var(--transition);
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--surface-hover);
+}
+
+/* Mobile Navigation Menu */
+.nav-links-mobile {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nav-link-mobile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  transition: var(--transition);
+}
+
+.nav-link-mobile:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.nav-link-mobile.active {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+
+.main-content {
+  flex: 1;
+  margin-top: var(--navbar-height);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Settings Page */
+.settings-page {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.settings-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.settings-container h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.settings-container p {
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  :root {
+    --navbar-height: 56px;
+  }
+
+  .navbar-container {
+    padding: 0 16px;
+  }
+
+  .logo-text {
+    display: none;
+  }
+
+  .nav-links-desktop {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
     display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background: #fff;
-}
+  }
 
-.app-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.app-header h1 {
-    font-size: 28px;
-    margin-bottom: 5px;
-}
-
-.app-header p {
-    font-size: 14px;
-    opacity: 0.9;
-    margin-bottom: 16px;
-}
-
-.header-nav {
+  .nav-links-mobile.active {
     display: flex;
-    gap: 12px;
-    justify-content: center;
+  }
+
+  .navbar-right {
+    display: none;
+  }
+
+  .main-content {
+    margin-top: var(--navbar-height);
+  }
 }
 
-.nav-btn {
-    padding: 8px 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: transparent;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s;
+@media (max-width: 480px) {
+  .navbar-container {
+    padding: 0 12px;
+  }
+
+  .logo-icon {
+    font-size: 20px;
+  }
+
+  .settings-page {
+    padding: 16px;
+  }
+
+  .settings-container h1 {
+    font-size: 22px;
+  }
 }
 
-.nav-btn:hover {
-    border-color: white;
-    background: rgba(255, 255, 255, 0.1);
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.nav-btn.active {
-    background: white;
-    color: #667eea;
-    border-color: white;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.app-main {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
