@@ -1,5 +1,38 @@
 /* ============================================
-   SESSION LIST STYLES
+   SESSION LIST STYLES - FALLBACK VERSION
+   ============================================ */
+
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1e40af;
+  --primary-light: #eff6ff;
+  --secondary: #64748b;
+  --background: #f9fafb;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --navbar-height: 64px;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --primary-light: #0c2340;
+  }
+}
+
+/* ============================================
+   CONTAINER
    ============================================ */
 
 .session-list-container {
@@ -10,14 +43,18 @@
   padding: 20px;
   overflow-y: auto;
   padding-top: calc(20px + var(--navbar-height));
+  gap: 16px;
 }
 
-/* Header */
+/* ============================================
+   HEADER
+   ============================================ */
+
 .session-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   gap: 12px;
 }
 
@@ -28,46 +65,21 @@
   margin: 0;
 }
 
-.session-new-btn {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: var(--radius-lg);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 14px;
-}
+/* ============================================
+   ERROR MESSAGE
+   ============================================ */
 
-.session-new-btn:hover {
-  background: var(--primary-dark);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
-/* Error Message */
 .session-error {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #991b1b;
   padding: 12px 16px;
   border-radius: var(--radius-lg);
-  margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
   animation: slideDown 0.3s ease-out;
-}
-
-.session-error button {
-  background: none;
-  border: none;
-  color: #991b1b;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 0;
-  margin-left: 12px;
 }
 
 @keyframes slideDown {
@@ -81,12 +93,15 @@
   }
 }
 
-/* Search Bar */
+/* ============================================
+   SEARCH BAR
+   ============================================ */
+
 .session-search {
   position: relative;
-  margin-bottom: 20px;
   display: flex;
   align-items: center;
+  margin-bottom: 4px;
 }
 
 .search-icon {
@@ -96,6 +111,7 @@
   width: 18px;
   height: 18px;
   pointer-events: none;
+  flex-shrink: 0;
 }
 
 .search-input {
@@ -119,37 +135,24 @@
   color: var(--text-tertiary);
 }
 
-.search-clear {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 16px;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
+/* ============================================
+   SESSIONS LIST
+   ============================================ */
 
-.search-clear:hover {
-  color: var(--text-primary);
-}
-
-/* Sessions List */
 .session-list {
   flex: 1;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  display: flex;
+  flex-direction: column;
 }
 
-/* Session Item */
+/* ============================================
+   SESSION ITEM
+   ============================================ */
+
 .session-item {
   display: flex;
   justify-content: space-between;
@@ -158,6 +161,7 @@
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: all 0.2s;
+  gap: 12px;
 }
 
 .session-item:last-child {
@@ -168,11 +172,13 @@
   background: var(--background);
 }
 
-.session-item.active {
+.session-item:active {
   background: var(--primary-light);
-  border-left: 4px solid var(--primary);
-  padding-left: calc(16px - 4px);
 }
+
+/* ============================================
+   SESSION ITEM CONTENT
+   ============================================ */
 
 .session-item-content {
   flex: 1;
@@ -183,7 +189,7 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin: 0 0 6px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -194,55 +200,31 @@
   gap: 12px;
   font-size: 12px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-
-.session-messages,
-.session-tokens,
-.session-date {
-  display: inline-flex;
-  align-items: center;
+  margin: 0;
 }
 
 .session-messages::before {
-  content: '💬';
-  margin-right: 4px;
+  content: '💬 ';
 }
 
 .session-tokens::before {
-  content: '🔢';
-  margin-right: 4px;
+  content: '🔢 ';
 }
 
 .session-date::before {
-  content: '🕐';
-  margin-right: 4px;
+  content: '🕐 ';
 }
 
-/* Tags */
-.session-tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+/* ============================================
+   SESSION ITEM ACTIONS
+   ============================================ */
 
-.tag {
-  display: inline-block;
-  background: var(--primary-light);
-  color: var(--primary);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-/* Actions */
 .session-item-actions {
   display: flex;
   gap: 8px;
-  margin-left: 12px;
   opacity: 0;
   transition: opacity 0.2s;
+  flex-shrink: 0;
 }
 
 .session-item:hover .session-item-actions {
@@ -261,6 +243,8 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .session-action-btn:hover {
@@ -280,14 +264,52 @@
   height: 16px;
 }
 
-/* Loading State */
-.session-loading {
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.session-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
   color: var(--text-secondary);
+  text-align: center;
+  flex: 1;
+}
+
+.session-empty p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.session-empty p:first-child {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.session-empty-hint {
+  font-size: 12px;
+  color: var(--text-tertiary) !important;
+  margin-top: 4px;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .loading-spinner {
@@ -306,97 +328,70 @@
   }
 }
 
-.session-loading p {
-  margin: 0;
-  font-size: 14px;
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+
+.session-list::-webkit-scrollbar {
+  width: 8px;
 }
 
-/* Empty State */
-.session-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-  text-align: center;
+.session-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.session-empty p {
-  margin: 0;
-  font-size: 14px;
+.session-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 
-.session-empty-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--text-tertiary);
+.session-list::-webkit-scrollbar-thumb:hover {
+  background: var(--border-dark);
 }
 
-/* Refresh Button */
-.session-refresh-btn {
-  margin-top: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  padding: 10px 16px;
-  border-radius: var(--radius-lg);
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s;
-  font-size: 14px;
+.session-list-container::-webkit-scrollbar {
+  width: 8px;
 }
 
-.session-refresh-btn:hover {
-  background: var(--background);
-  border-color: var(--border-dark);
+.session-list-container::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.session-refresh-btn svg {
-  width: 16px;
-  height: 16px;
+.session-list-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 
-/* Responsive */
+.session-list-container::-webkit-scrollbar-thumb:hover {
+  background: var(--border-dark);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
 @media (max-width: 768px) {
   .session-list-container {
     padding: 16px;
     padding-top: calc(16px + var(--navbar-height));
   }
 
-  .session-list-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .session-new-btn {
-    width: 100%;
+  .session-list-title {
+    font-size: 24px;
   }
 
   .session-item {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .session-item-content {
+    width: 100%;
   }
 
   .session-item-actions {
     width: 100%;
-    margin-left: 0;
-    margin-top: 12px;
-    opacity: 1;
     justify-content: flex-end;
-  }
-
-  .session-item-title {
-    font-size: 14px;
-  }
-
-  .session-item-meta {
-    font-size: 11px;
+    opacity: 1;
   }
 }
 
@@ -407,29 +402,32 @@
   }
 
   .session-list-title {
-    font-size: 22px;
-  }
-
-  .session-new-btn {
-    padding: 8px 12px;
-    font-size: 13px;
+    font-size: 20px;
   }
 
   .session-item {
     padding: 12px;
   }
 
+  .session-item-title {
+    font-size: 14px;
+  }
+
   .session-item-meta {
-    flex-direction: column;
-    gap: 4px;
+    font-size: 11px;
   }
 
-  .session-tags {
-    gap: 4px;
+  .session-action-btn {
+    width: 28px;
+    height: 28px;
   }
 
-  .tag {
-    padding: 2px 6px;
-    font-size: 10px;
+  .session-action-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .session-empty {
+    padding: 40px 16px;
   }
 }

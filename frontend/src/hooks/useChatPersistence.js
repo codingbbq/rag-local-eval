@@ -1,368 +1,372 @@
-/**
- * useChatPersistence Hook
- * Manages chat session creation, message saving, and retrieval
- */
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
-import storage from '../services/storage';
 
-export const useChatPersistence = () => {
+/**
+ * Custom hook for chat persistence
+ * Manages session creation, message storage, and retrieval
+ * 
+ * COMPATIBLE VERSION - Works with existing api.js methods
+ */
+export default function useChatPersistence() {
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const sessionCreatedRef = useRef(false);
+  const messageCountRef = useRef(0);
 
   // ============================================
-  // INITIALIZE SESSION ON MOUNT
+  // Initialize on Mount
   // ============================================
 
   useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Create new session on mount
+        const timestamp = new Date().toLocaleString();
+        const newSessionId = `session_${Date.now()}`;
+        
+        setSessionId(newSessionId);
+        setMessages([]);
+        messageCountRef.current = 0;
+        sessionCreatedRef.current = false;
+        
+        // Store in localStorage for this session
+        localStorage.setItem('lastSessionId', newSessionId);
+        
+        console.log(`✅ New session created locally: ${newSessionId}`);
+        setError(null);
+      } catch (err) {
+        console.error('Error initializing session:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     initializeSession();
   }, []);
 
-  const initializeSession = async () => {
+  // ============================================
+  // Create New Session
+  // ============================================
+
+  const createNewSession = useCallback(async (title) => {
     try {
       setIsLoading(true);
-      setError(null);
-
-      // Check if we have a current session
-      let currentSessionId = storage.getCurrentSessionId();
-
-      if (currentSessionId) {
-        // Load existing session
+      
+      // Only save previous session if it has messages
+      if (sessionId && messageCountRef.current > 0 && !sessionCreatedRef.current) {
         try {
-          const session = await api.chat.getSession(currentSessionId);
-          setSessionId(session.session_id);
+          const timestamp = new Date().toLocaleString();
+          const sessionTitle = title || `Chat - ${timestamp}`;
           
-          // Convert to message format
-          const formattedMessages = session.messages.map((msg, idx) => ({
-            id: msg.id,
-            text: msg.content,
-            type: msg.role,
-            timestamp: new Date(msg.timestamp),
-            tokensUsed: msg.tokens_used,
-            isOnTopic: msg.is_on_topic,
-            sourceDocumentCount: msg.source_document_count,
-            requestId: msg.request_id
-          }));
+          // Create the session in database with existing messages
+          await api.createSession({
+            title: sessionTitle,
+            messages: messages
+          });
           
-          setMessages(formattedMessages);
-          
-          // Cache messages locally
-          storage.setCacheMessages(formattedMessages);
+          sessionCreatedRef.current = true;
+          console.log(`✅ Previous session saved to database: ${sessionTitle}`);
         } catch (err) {
-          console.warn('Could not load existing session, creating new one:', err);
-          // Create new session if loading fails
-          await createNewSession();
+          console.warn('Could not save previous session:', err);
         }
-      } else {
-        // Create new session
-        await createNewSession();
       }
-    } catch (err) {
-      setError(err.message);
-      console.error('Error initializing session:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ============================================
-  // SESSION MANAGEMENT
-  // ============================================
-
-  const createNewSession = useCallback(async (title = null) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const sessionTitle = title || `Chat Session - ${new Date().toLocaleString()}`;
-      const sessionData = await api.chat.createSession(sessionTitle);
       
-      setSessionId(sessionData.session_id);
-      storage.setCurrentSessionId(sessionData.session_id);
-      storage.addToSessionHistory({
-        session_id: sessionData.session_id,
-        title: sessionData.title,
-        created_at: sessionData.created_at,
-        message_count: 0
-      });
+      // Create new local session
+      const newSessionId = `session_${Date.now()}`;
+      const timestamp = new Date().toLocaleString();
       
+      setSessionId(newSessionId);
       setMessages([]);
-      storage.clearCachedMessages();
+      messageCountRef.current = 0;
+      sessionCreatedRef.current = false;
       
-      return sessionData.session_id;
+      // Update localStorage
+      localStorage.setItem('lastSessionId', newSessionId);
+      
+      setError(null);
+      console.log(`📝 New session created locally: ${newSessionId}`);
     } catch (err) {
+      console.error('Error creating new session:', err);
       setError(err.message);
-      console.error('Error creating session:', err);
-      throw err;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [sessionId, messages]);
 
-  const loadSession = useCallback(async (loadSessionId) => {
+  // ============================================
+  // Load Existing Session
+  // ============================================
+
+  const loadSession = useCallback(async (id) => {
     try {
       setIsLoading(true);
+      
+      // Only save current session if it has messages
+      if (sessionId && messageCountRef.current > 0 && !sessionCreatedRef.current) {
+        try {
+          const timestamp = new Date().toLocaleString();
+          await api.createSession({
+            title: `Chat - ${timestamp}`,
+            messages: messages
+          });
+          sessionCreatedRef.current = true;
+          console.log(`✅ Current session auto-saved before switching`);
+        } catch (err) {
+          console.warn('Could not save current session:', err);
+        }
+      }
+      
+      // Load the requested session
+      const allSessions = await api.listSessions();
+      const session = allSessions.sessions?.find(s => s.session_id === id);
+      
+      if (session) {
+        setSessionId(id);
+        setMessages(session.messages || []);
+        messageCountRef.current = session.messages?.length || 0;
+        sessionCreatedRef.current = true;
+        
+        // Update localStorage
+        localStorage.setItem('lastSessionId', id);
+        
+        console.log(`📂 Session loaded: ${id} (${messageCountRef.current} messages)`);
+      } else {
+        console.error(`Session not found: ${id}`);
+        setError(`Session ${id} not found`);
+      }
+      
       setError(null);
-
-      const session = await api.chat.getSession(loadSessionId);
-      
-      setSessionId(session.session_id);
-      storage.setCurrentSessionId(session.session_id);
-      
-      // Convert to message format
-      const formattedMessages = session.messages.map((msg, idx) => ({
-        id: msg.id,
-        text: msg.content,
-        type: msg.role,
-        timestamp: new Date(msg.timestamp),
-        tokensUsed: msg.tokens_used,
-        isOnTopic: msg.is_on_topic,
-        sourceDocumentCount: msg.source_document_count,
-        requestId: msg.request_id
-      }));
-      
-      setMessages(formattedMessages);
-      storage.setCacheMessages(formattedMessages);
-      
-      return formattedMessages;
     } catch (err) {
-      setError(err.message);
       console.error('Error loading session:', err);
-      throw err;
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [sessionId, messages]);
 
-  const deleteSession = useCallback(async (deleteSessionId) => {
+  // ============================================
+  // Delete Session
+  // ============================================
+
+  const deleteSession = useCallback(async (id) => {
     try {
-      setError(null);
+      await api.deleteSession(id);
       
-      await api.chat.deleteSession(deleteSessionId);
-      storage.removeFromSessionHistory(deleteSessionId);
-      
-      // If we deleted the current session, create a new one
-      if (deleteSessionId === sessionId) {
+      // If deleted session was active, create new one
+      if (id === sessionId) {
         await createNewSession();
       }
       
-      return true;
+      console.log(`🗑️  Session deleted: ${id}`);
     } catch (err) {
-      setError(err.message);
       console.error('Error deleting session:', err);
-      throw err;
+      setError(err.message);
     }
   }, [sessionId, createNewSession]);
 
   // ============================================
-  // MESSAGE MANAGEMENT
+  // Add User Message
   // ============================================
 
-  const addUserMessage = useCallback(async (content) => {
-    if (!sessionId) {
-      setError('No active session');
-      return null;
-    }
-
+  const addUserMessage = useCallback(async (text) => {
     try {
-      setError(null);
-
-      // Add message to backend
-      await api.chat.addMessage(
-        sessionId,
-        content,
-        'user',
-        {
-          tokensUsed: estimateTokens(content),
-          isOnTopic: true
-        }
-      );
-
-      // Add to local state
-      const newMessage = {
-        id: `msg-${Date.now()}`,
-        text: content,
+      const userMessage = {
+        id: `msg_${Date.now()}_user`,
         type: 'user',
-        timestamp: new Date(),
-        tokensUsed: estimateTokens(content),
-        isOnTopic: true,
-        sourceDocumentCount: 0
+        content: text,
+        timestamp: new Date().toISOString()
       };
-
-      setMessages(prev => [...prev, newMessage]);
       
-      return newMessage;
-    } catch (err) {
-      setError(err.message);
-      console.error('Error adding user message:', err);
-      throw err;
-    }
-  }, [sessionId]);
-
-  const addAssistantMessage = useCallback(async (content, options = {}) => {
-    if (!sessionId) {
-      setError('No active session');
-      return null;
-    }
-
-    try {
-      setError(null);
-
-      const {
-        tokensUsed = 0,
-        isOnTopic = true,
-        sourceDocumentCount = 0,
-        requestId = ''
-      } = options;
-
-      // Add message to backend
-      await api.chat.addMessage(
-        sessionId,
-        content,
-        'assistant',
-        {
-          tokensUsed,
-          isOnTopic,
-          sourceDocumentCount,
-          requestId
+      // Update local state
+      setMessages(prev => [...prev, userMessage]);
+      messageCountRef.current += 1;
+      
+      // Save to database only if session is already created
+      if (sessionCreatedRef.current && sessionId) {
+        try {
+          await api.addMessageToSession(sessionId, userMessage);
+        } catch (err) {
+          console.warn('Could not save user message to database:', err);
         }
-      );
-
-      // Add to local state
-      const newMessage = {
-        id: `msg-${Date.now()}`,
-        text: content,
-        type: 'assistant',
-        timestamp: new Date(),
-        tokensUsed,
-        isOnTopic,
-        sourceDocumentCount,
-        requestId
-      };
-
-      setMessages(prev => [...prev, newMessage]);
+      }
       
-      return newMessage;
+      console.log(`📤 User message added (${messageCountRef.current} total)`);
     } catch (err) {
+      console.error('Error adding user message:', err);
       setError(err.message);
-      console.error('Error adding assistant message:', err);
-      throw err;
     }
   }, [sessionId]);
+
+  // ============================================
+  // Add Assistant Message (Auto-save first exchange)
+  // ============================================
+
+  const addAssistantMessage = useCallback(async (text, metadata = {}) => {
+    try {
+      // Auto-create session on first assistant message (when user has sent a message)
+      if (!sessionCreatedRef.current && sessionId && messageCountRef.current > 0) {
+        try {
+          const timestamp = new Date().toLocaleString();
+          await api.createSession({
+            title: `Chat - ${timestamp}`,
+            messages: messages
+          });
+          sessionCreatedRef.current = true;
+          console.log(`✅ Session auto-saved on first exchange`);
+        } catch (err) {
+          console.warn('Could not auto-save session:', err);
+        }
+      }
+      
+      const assistantMessage = {
+        id: `msg_${Date.now()}_assistant`,
+        type: 'assistant',
+        content: text,
+        timestamp: new Date().toISOString(),
+        ...metadata
+      };
+      
+      // Update local state
+      setMessages(prev => [...prev, assistantMessage]);
+      messageCountRef.current += 1;
+      
+      // Save to database if session is created
+      if (sessionCreatedRef.current && sessionId) {
+        try {
+          await api.addMessageToSession(sessionId, assistantMessage);
+        } catch (err) {
+          console.warn('Could not save assistant message to database:', err);
+        }
+      }
+      
+      console.log(`📥 Assistant message added (${messageCountRef.current} total)`);
+    } catch (err) {
+      console.error('Error adding assistant message:', err);
+      setError(err.message);
+    }
+  }, [sessionId, messages]);
+
+  // ============================================
+  // Clear Messages (Keep Session)
+  // ============================================
 
   const clearMessages = useCallback(() => {
     setMessages([]);
-    storage.clearCachedMessages();
+    messageCountRef.current = 0;
+    console.log('🧹 Messages cleared');
   }, []);
 
   // ============================================
-  // UTILITY FUNCTIONS
+  // Get Conversation History
   // ============================================
 
-  /**
-   * Estimate token count (rough approximation)
-   * 1 token ≈ 4 characters
-   */
-  const estimateTokens = (text) => {
-    return Math.ceil(text.length / 4);
-  };
-
-  /**
-   * Get conversation history for RAG context
-   */
   const getConversationHistory = useCallback(() => {
     return messages.map(msg => ({
       role: msg.type === 'user' ? 'user' : 'assistant',
-      content: msg.text
+      content: msg.content
     }));
   }, [messages]);
 
-  /**
-   * Export current session
-   */
-  const exportSession = useCallback(async () => {
-    if (!sessionId) {
-      setError('No active session to export');
+  // ============================================
+  // Export Session
+  // ============================================
+
+  const exportSession = useCallback(async (id) => {
+    try {
+      const data = await api.exportSession(id);
+      return data;
+    } catch (err) {
+      console.error('Error exporting session:', err);
+      setError(err.message);
       return null;
     }
+  }, []);
 
+  // ============================================
+  // Download Session as Text
+  // ============================================
+
+  const downloadSessionAsText = useCallback(async (id) => {
     try {
-      setError(null);
-      const exported = await api.chat.exportSession(sessionId);
-      return exported;
-    } catch (err) {
-      setError(err.message);
-      console.error('Error exporting session:', err);
-      throw err;
-    }
-  }, [sessionId]);
-
-  /**
-   * Download session as text file
-   */
-  const downloadSessionAsText = useCallback(async () => {
-    if (!sessionId) {
-      setError('No active session to download');
-      return;
-    }
-
-    try {
-      setError(null);
-      const data = await api.chat.downloadSessionTxt(sessionId);
+      const text = await api.downloadSessionAsText(id);
       
       // Create blob and download
-      const blob = new Blob([data.content], { type: 'text/plain' });
+      const blob = new Blob([text], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${data.title}.txt`;
-      document.body.appendChild(a);
+      a.download = `session_${id}.txt`;
       a.click();
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
       
-      return true;
+      console.log('📥 Session downloaded');
     } catch (err) {
-      setError(err.message);
       console.error('Error downloading session:', err);
-      throw err;
+      setError(err.message);
     }
-  }, [sessionId]);
+  }, []);
 
-  /**
-   * Get total tokens used in current session
-   */
+  // ============================================
+  // Get Total Tokens
+  // ============================================
+
   const getTotalTokens = useCallback(() => {
-    return messages.reduce((sum, msg) => sum + (msg.tokensUsed || 0), 0);
+    return messages.reduce((total, msg) => {
+      return total + (msg.tokensUsed || 0);
+    }, 0);
   }, [messages]);
 
+  // ============================================
+  // Get Session Stats
+  // ============================================
+
+  const getSessionStats = useCallback(() => {
+    return {
+      sessionId,
+      messageCount: messages.length,
+      userMessages: messages.filter(m => m.type === 'user').length,
+      assistantMessages: messages.filter(m => m.type === 'assistant').length,
+      totalTokens: getTotalTokens(),
+      isSaved: sessionCreatedRef.current
+    };
+  }, [sessionId, messages, getTotalTokens]);
+
+  // ============================================
+  // Return Public API
+  // ============================================
+
   return {
-    // State
     sessionId,
     messages,
     isLoading,
     error,
-
+    
     // Session management
     createNewSession,
     loadSession,
     deleteSession,
-
+    
     // Message management
     addUserMessage,
     addAssistantMessage,
     clearMessages,
-
-    // Utilities
-    estimateTokens,
+    
+    // Data retrieval
     getConversationHistory,
+    getTotalTokens,
+    getSessionStats,
+    
+    // Export
     exportSession,
     downloadSessionAsText,
-    getTotalTokens
+    
+    // Status
+    isSaved: sessionCreatedRef.current,
+    messageCount: messages.length
   };
-};
-
-export default useChatPersistence;
+}
