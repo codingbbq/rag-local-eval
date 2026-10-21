@@ -1,144 +1,380 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
-from typing import List
-from app.schemas.schemas import (
-    QueryRequest, QueryResponse, HealthResponse,
-    ProcessingSettings, UploadResponse, ProcessResponse
-)
-from app.services.upload_service import upload_service
-from app.services.rag_service import rag_service
-from app.utils.logger import logger
-from app.services.hybrid_search_service import hybrid_search_service
+"""
+RAG Query Routes - Using Correct RAGService Methods
+"""
 
-debug_logger = logger.get_logger(__name__)
-router = APIRouter(prefix="/api/v1", tags=["RAG"])
+import logging
+import os
+import shutil
+from fastapi import APIRouter, HTTPException, UploadFile, File, Query
+from pydantic import BaseModel
+from typing import Optional, List
 
-@router.get("/health", response_model=HealthResponse)
-async def health_check():
-    """Health check endpoint"""
-    debug_logger.info("🏥 Health check requested")
-    stats = rag_service.get_stats()
-    return {
-        "status": "ok",
-        "vectors_in_index": stats["vectors_in_index"]
-    }
+# ============================================
+# SETUP
+# ============================================
 
-@router.post("/query", response_model=QueryResponse)
-async def process_query(request: QueryRequest):
-    """
-    Process user query with theme-based filtering.
-    Only answers questions related to the configured theme.
-    """
-    debug_logger.info(f"🎯 Processing query: {request.query}")
-    
-    try:
-        result = rag_service.query(request.query, top_k=request.top_k)
-        debug_logger.info("✅ Query processed successfully")
-        return result
-        
-    except Exception as e:
-        debug_logger.error(f"❌ Exception in /query endpoint: {str(e)}", exc_info=True)
-        
-        # Return more detailed error in debug mode
-        from app.config import settings
-        if settings.DEBUG:
-            error_detail = f"Error: {str(e)}\n\nCheck debug.log for details."
-        else:
-            error_detail = "An error occurred processing your query. Please try again."
-        
-        raise HTTPException(status_code=500, detail=error_detail)
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api/v1", tags=["query"])
 
+# Global RAG service instance (set by main.py)
+rag_service = None
 
-@router.post("/upload", response_model=UploadResponse)
+def set_rag_service(service):
+    """Set the RAG service instance"""
+    global rag_service
+    rag_service = service
+    logger.info("✅ RAG service set in routes")
+
+# ============================================
+# SCHEMAS
+# ============================================
+
+class QueryRequest(BaseModel):
+    query: str
+    top_k: Optional[int] = 5
+    use_history: Optional[bool] = True
+
+class QueryResponse(BaseModel):
+    answer: str
+    relevant_docs: List[dict]
+    request_id: str
+
+# ============================================
+# UPLOAD ENDPOINT
+# ============================================
+
+@router.post("/upload")
 async def upload_documents(files: List[UploadFile] = File(...)):
     """
-    Upload documents (PDF or TXT)
+    Upload documents for RAG
     
-    Args:
-        files: List of files to upload
-        
-    Returns:
-        Upload response with file info
+    Supported formats: PDF, TXT, DOCX, etc.
+    
+    Note: Documents are automatically processed and indexed by RAGService
     """
-    debug_logger.info(f"📤 Uploading {len(files)} files")
-    
     try:
-        file_names, total_size = upload_service.save_uploaded_files(files)
+        if not rag_service:
+            raise HTTPException(status_code=500, detail="RAG service not initialized")
         
-        info = upload_service.get_uploaded_files_info()
+        upload_dir = "backend/uploads"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        uploaded_files = []
+        
+        for file in files:
+            file_path = os.path.join(upload_dir, file.filename)
+            
+            # Save file
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            uploaded_files.append({
+                "filename": file.filename,
+                "size": os.path.getsize(file_path),
+                "path": file_path
+            })
+            
+            logger.info(f"✅ Uploaded: {file.filename}")
         
         return {
-            "files_uploaded": info["files_uploaded"],
-            "file_names": info["file_names"],
-            "total_size_mb": info["total_size_mb"],
-            "ready_to_process": len(file_names) > 0
+            "success": True,
+            "message": f"{len(uploaded_files)} files uploaded successfully",
+            "files": uploaded_files,
+            "note": "Documents will be processed on first query"
         }
-        
-    except Exception as e:
-        debug_logger.error(f"❌ Upload error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.post("/process", response_model=ProcessResponse)
-async def process_documents(settings: ProcessingSettings):
-    """
-    Process uploaded documents with custom settings
     
-    Args:
-        settings: Processing settings (chunk size, overlap, k)
-        
-    Returns:
-        Processing result with statistics
-    """
-    debug_logger.info(f"🔄 Processing documents with settings: {settings}")
-    
-    try:
-        result = upload_service.process_documents(
-            chunk_size=settings.chunk_size,
-            chunk_overlap=settings.chunk_overlap
-        )
-        
-        # Reload RAG service with new FAISS index
-        debug_logger.info("🔄 Reloading RAG service...")
-        rag_service.initialize()
-        debug_logger.info("✓ RAG service reloaded")
-        
-        return ProcessResponse(**result)
-        
     except Exception as e:
-        debug_logger.error(f"❌ Processing error: {str(e)}", exc_info=True)
+        logger.error(f"❌ Error uploading files: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ============================================
+# PROCESS ENDPOINT (No-op for this RAGService)
+# ============================================
+
+@router.post("/process")
+async def process_documents():
+    """
+    Process uploaded documents
+    
+    Note: This RAGService processes documents automatically.
+    This endpoint is kept for API compatibility.
+    Documents are indexed on first query.
+    """
+    try:
+        if not rag_service:
+            raise HTTPException(status_code=500, detail="RAG service not initialized")
+        
+        logger.info("📄 Initializing RAG service (if not already done)...")
+        
+        upload_dir = "backend/uploads"
+        if not os.path.exists(upload_dir):
+            return {
+                "success": True,
+                "message": "No documents to process, but RAG service is ready",
+                "processed_files": 0,
+                "note": "Upload documents first with /upload"
+            }
+        
+        # Get uploaded files
+        files = [f for f in os.listdir(upload_dir) if os.path.isfile(os.path.join(upload_dir, f))]
+        
+        if not files:
+            return {
+                "success": True,
+                "message": "No documents found in uploads directory",
+                "processed_files": 0
+            }
+        
+        logger.info(f"✅ Found {len(files)} documents ready for indexing")
+        logger.info(f"✅ Documents will be indexed automatically on first query")
+        
+        return {
+            "success": True,
+            "message": f"Found {len(files)} documents. Ready to query.",
+            "processed_files": len(files),
+            "total_files": len(files),
+            "status": "ready"
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error processing documents: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================
+# QUERY ENDPOINT - MAIN FUNCTIONALITY
+# ============================================
+
+@router.post("/query")
+async def process_query(request: QueryRequest):
+    """
+    Send a query to the RAG system
+    
+    Returns relevant documents and generated answer using LLM
+    
+    Parameters:
+    - query: Your question
+    - top_k: Number of relevant documents to retrieve (default: 5)
+    - use_history: Use conversation history (default: True)
+    """
+    try:
+        if not rag_service:
+            raise HTTPException(
+                status_code=500,
+                detail="RAG service not initialized. Please upload documents first."
+            )
+        
+        logger.info(f"🔍 Query: {request.query}")
+        logger.info(f"   top_k: {request.top_k}")
+        logger.info(f"   use_history: {request.use_history}")
+        
+        # Call the RAGService query method with correct parameters
+        result = rag_service.query(
+            user_query=request.query,
+            top_k=request.top_k,
+            use_history=request.use_history
+        )
+        
+        logger.info(f"✅ Query processed successfully")
+        
+        # Extract response data
+        answer = result.get("answer", "No answer generated")
+        relevant_docs = result.get("relevant_docs", [])
+        request_id = result.get("request_id", "unknown")
+        
+        return {
+            "success": True,
+            "query": request.query,
+            "answer": answer,
+            "relevant_docs": relevant_docs,
+            "num_docs_retrieved": len(relevant_docs),
+            "request_id": request_id
+        }
+    
+    except RuntimeError as e:
+        logger.error(f"❌ RAG Service Error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"RAG service error: {str(e)}"
+        )
+    
+    except Exception as e:
+        logger.error(f"❌ Exception in /query endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================
+# CLEAR UPLOADS ENDPOINT
+# ============================================
 
 @router.delete("/uploads/clear")
 async def clear_uploads():
-    """Clear all uploaded files"""
-    debug_logger.info("🗑️  Clearing uploaded files")
-    upload_service.clear_uploads()
-    return {"status": "cleared"}
+    """Clear uploaded documents"""
+    try:
+        upload_dir = "backend/uploads"
+        
+        if os.path.exists(upload_dir):
+            shutil.rmtree(upload_dir)
+            os.makedirs(upload_dir, exist_ok=True)
+            logger.info("✅ Uploads cleared")
+        
+        return {
+            "success": True,
+            "message": "All uploads cleared"
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error clearing uploads: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.delete("/conversation/clear")
-async def clear_conversation():
-    """Clear conversation history"""
-    debug_logger.info("🗑️ Clearing conversation")
-    rag_service.clear_conversation()
-    return {"status": "cleared"}
+# ============================================
+# CONVERSATION ENDPOINTS
+# ============================================
 
 @router.get("/conversation/history")
 async def get_conversation_history():
     """Get conversation history"""
-    history = rag_service.get_conversation_history()
-    return {
-        "history": history,
-        "turns": len(history) // 2
-    }
-
-@router.get("/debug/bm25-status")
-async def debug_bm25_status():
-    """Check if BM25 is initialized"""
+    try:
+        if not rag_service:
+            return {
+                "history": [],
+                "total_turns": 0
+            }
         
+        # Use the get_conversation_history method
+        history = rag_service.get_conversation_history()
+        
+        return {
+            "success": True,
+            "history": history,
+            "total_turns": len(history) if history else 0
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error getting conversation history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/conversation/clear")
+async def clear_conversation():
+    """Clear conversation history"""
+    try:
+        if rag_service:
+            # Use the clear_conversation method
+            rag_service.clear_conversation()
+            logger.info("✅ Conversation history cleared")
+        
+        return {
+            "success": True,
+            "message": "Conversation history cleared"
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error clearing conversation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================
+# STATS ENDPOINT
+# ============================================
+
+@router.get("/stats")
+async def get_stats():
+    """Get RAG service statistics"""
+    try:
+        if not rag_service:
+            return {
+                "status": "not_initialized",
+                "stats": {}
+            }
+        
+        # Use the get_stats method
+        stats = rag_service.get_stats()
+        
+        return {
+            "success": True,
+            "stats": stats
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error getting stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================
+# DEBUG ENDPOINTS
+# ============================================
+
+@router.get("/debug/status")
+async def debug_status():
+    """Check overall RAG system status"""
+    try:
+        if not rag_service:
+            return {
+                "status": "not_initialized",
+                "message": "RAG service not initialized"
+            }
+        
+        stats = rag_service.get_stats()
+        
+        return {
+            "status": "initialized",
+            "rag_service_active": True,
+            "stats": stats
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error checking status: {str(e)}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
+# ============================================
+# RELEVANCE CHECK ENDPOINT
+# ============================================
+
+@router.post("/check-relevance")
+async def check_relevance(request: QueryRequest):
+    """
+    Check relevance of retrieved documents for a query
+    
+    This is useful for evaluating query quality
+    """
+    try:
+        if not rag_service:
+            raise HTTPException(status_code=500, detail="RAG service not initialized")
+        
+        # First query to get documents
+        result = rag_service.query(
+            user_query=request.query,
+            top_k=request.top_k,
+            use_history=False
+        )
+        
+        retrieved_docs = result.get("relevant_docs", [])
+        
+        # Check relevance using RAGService method
+        relevance_scores = rag_service.check_relevance(
+            retrieved_docs=retrieved_docs,
+            top_k=request.top_k
+        )
+        
+        return {
+            "success": True,
+            "query": request.query,
+            "num_docs": len(retrieved_docs),
+            "relevance_scores": relevance_scores
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error checking relevance: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================
+# HEALTH CHECK
+# ============================================
+
+@router.get("/health")
+async def health_check():
+    """Health check for query service"""
     return {
-        "bm25_initialized": hybrid_search_service.bm25 is not None,
-        "documents_loaded": len(hybrid_search_service.documents) if hybrid_search_service.documents else 0,
-        "documents_text_loaded": len(hybrid_search_service.documents_text) if hybrid_search_service.documents_text else 0
+        "service": "RAG Query Service",
+        "status": "healthy",
+        "rag_service_ready": rag_service is not None
     }
