@@ -1,53 +1,9 @@
-/* ============================================
-   MESSAGE LIST STYLES - ENTERPRISE
-   ============================================ */
-
-:root {
-  --primary: #2563eb;
-  --primary-dark: #1e40af;
-  --primary-light: #eff6ff;
-  --secondary: #64748b;
-  --accent: #059669;
-  --background: #f9fafb;
-  --surface: #ffffff;
-  --border: #e5e7eb;
-  --border-dark: #d1d5db;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-tertiary: #9ca3af;
-  --navbar-height: 64px;
-  --radius-lg: 12px;
-  --radius-md: 8px;
-  --radius-sm: 4px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --border-dark: #475569;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-tertiary: #94a3b8;
-    --primary-light: #0c2340;
-  }
-}
-
-/* ============================================
-   MESSAGE LIST CONTAINER
-   ============================================ */
-
 .message-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 0;
 }
-
-/* ============================================
-   EMPTY STATE
-   ============================================ */
 
 .message-list-empty {
   display: flex;
@@ -83,10 +39,6 @@
   margin-top: 4px;
 }
 
-/* ============================================
-   MESSAGE WRAPPER
-   ============================================ */
-
 .message {
   display: flex;
   gap: 12px;
@@ -108,17 +60,9 @@
   flex-direction: row-reverse;
 }
 
-.message.message-assistant {
-  flex-direction: row;
-}
-
-/* ============================================
-   AVATAR
-   ============================================ */
-
 .message-avatar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   width: 36px;
   height: 36px;
@@ -145,12 +89,8 @@
 }
 
 .assistant-icon {
-  color: var(--accent);
+  color: #059669;
 }
-
-/* ============================================
-   MESSAGE CONTENT WRAPPER
-   ============================================ */
 
 .message-content-wrapper {
   display: flex;
@@ -167,10 +107,6 @@
 .message.message-assistant .message-content-wrapper {
   align-items: flex-start;
 }
-
-/* ============================================
-   MESSAGE HEADER
-   ============================================ */
 
 .message-header {
   display: flex;
@@ -194,16 +130,11 @@
   font-size: 11px;
 }
 
-/* ============================================
-   MESSAGE CONTENT
-   ============================================ */
-
 .message-content {
   padding: 12px 16px;
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   line-height: 1.6;
   word-wrap: break-word;
-  overflow-wrap: break-word;
 }
 
 .message.message-user .message-content {
@@ -217,70 +148,11 @@
   color: var(--text-primary);
 }
 
-/* ============================================
-   MESSAGE TEXT
-   ============================================ */
-
 .message-text {
   margin: 0;
   font-size: 14px;
   white-space: pre-wrap;
 }
-
-/* ============================================
-   MARKDOWN CONTENT (Assistant Messages)
-   ============================================ */
-
-.message.message-assistant .message-content :first-child {
-  margin-top: 0;
-}
-
-.message.message-assistant .message-content :last-child {
-  margin-bottom: 0;
-}
-
-/* Code blocks in assistant messages */
-.message.message-assistant .message-content pre {
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 12px;
-  overflow-x: auto;
-  margin: 8px 0;
-}
-
-.message.message-assistant .message-content code {
-  font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-/* Lists in assistant messages */
-.message.message-assistant .message-content ul,
-.message.message-assistant .message-content ol {
-  margin: 8px 0;
-  padding-left: 24px;
-}
-
-.message.message-assistant .message-content li {
-  margin: 4px 0;
-}
-
-/* Links in assistant messages */
-.message.message-assistant .message-content a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.message.message-assistant .message-content a:hover {
-  text-decoration: underline;
-  color: var(--primary-dark);
-}
-
-/* ============================================
-   MESSAGE METADATA
-   ============================================ */
 
 .message-metadata {
   display: flex;
@@ -290,10 +162,6 @@
   padding: 0 4px;
   font-size: 11px;
 }
-
-/* ============================================
-   BADGES
-   ============================================ */
 
 .on-topic-badge,
 .doc-count-badge,
@@ -310,7 +178,7 @@
 
 .on-topic-badge {
   background: rgba(5, 150, 105, 0.15);
-  color: var(--accent);
+  color: #059669;
 }
 
 .on-topic-badge.off-topic {
@@ -328,10 +196,6 @@
   color: var(--secondary);
 }
 
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-
 @media (max-width: 768px) {
   .message-content-wrapper {
     max-width: 90%;
@@ -340,14 +204,6 @@
   .message-content {
     padding: 10px 14px;
     font-size: 13px;
-  }
-
-  .message-header {
-    font-size: 11px;
-  }
-
-  .message-time {
-    font-size: 10px;
   }
 }
 
@@ -369,128 +225,5 @@
     padding: 8px 12px;
     font-size: 12px;
     border-radius: 8px;
-  }
-
-  .avatar-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  .message-metadata {
-    gap: 6px;
-  }
-
-  .on-topic-badge,
-  .doc-count-badge,
-  .tokens-badge {
-    padding: 1px 6px;
-    font-size: 10px;
-  }
-}
-
-/* ============================================
-   HOVER EFFECTS
-   ============================================ */
-
-.message {
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.message:hover .message-content {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-/* ============================================
-   SCROLLBAR
-   ============================================ */
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--border-dark);
-}
-
-/* ============================================
-   MARKDOWN STYLES FOR ASSISTANT MESSAGES
-   ============================================ */
-
-.message.message-assistant .message-content h1,
-.message.message-assistant .message-content h2,
-.message.message-assistant .message-content h3,
-.message.message-assistant .message-content h4,
-.message.message-assistant .message-content h5,
-.message.message-assistant .message-content h6 {
-  margin: 12px 0 8px 0;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.message.message-assistant .message-content h1 {
-  font-size: 20px;
-}
-
-.message.message-assistant .message-content h2 {
-  font-size: 18px;
-}
-
-.message.message-assistant .message-content h3 {
-  font-size: 16px;
-}
-
-.message.message-assistant .message-content h4 {
-  font-size: 15px;
-}
-
-.message.message-assistant .message-content blockquote {
-  margin: 8px 0;
-  padding-left: 12px;
-  border-left: 3px solid var(--primary);
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.message.message-assistant .message-content hr {
-  margin: 12px 0;
-  border: none;
-  border-top: 1px solid var(--border);
-}
-
-.message.message-assistant .message-content table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 12px 0;
-  font-size: 13px;
-}
-
-.message.message-assistant .message-content th,
-.message.message-assistant .message-content td {
-  border: 1px solid var(--border);
-  padding: 8px;
-  text-align: left;
-}
-
-.message.message-assistant .message-content th {
-  background: var(--background);
-  font-weight: 600;
-}
-
-.message.message-assistant .message-content tr:nth-child(even) {
-  background: rgba(0, 0, 0, 0.02);
-}
-
-@media (prefers-color-scheme: dark) {
-  .message.message-assistant .message-content tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.02);
   }
 }

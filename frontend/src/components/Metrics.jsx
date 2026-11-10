@@ -1,122 +1,86 @@
 import React from 'react';
-import { FiCheck, FiTarget, FiEye, FiStar } from 'react-icons/fi';
+import { FiMessageCircle, FiZap, FiCheck } from 'react-icons/fi';
 import '../styles/Metrics.css';
 
-function Metrics({ metrics }) {
-  // Debug
-  console.log('Metrics component received:', metrics);
+function Metrics({ messages = [], getTotalTokens }) {
+  const totalMessages = messages.length;
+  const userMessages = messages.filter(m => m.type === 'user').length;
+  const assistantMessages = messages.filter(m => m.type === 'assistant').length;
 
-  if (!metrics) {
+  let totalTokens = 0;
+  try {
+    if (typeof getTotalTokens === 'function') {
+      totalTokens = getTotalTokens();
+    } else if (typeof getTotalTokens === 'number') {
+      totalTokens = getTotalTokens;
+    }
+  } catch (err) {
+    console.warn('Error calculating tokens:', err);
+  }
+
+  const onTopicMessages = messages.filter(m => m.isOnTopic === true).length;
+  const offTopicMessages = messages.filter(m => m.isOnTopic === false).length;
+  const totalRelevance = onTopicMessages + offTopicMessages;
+  const relevancePercent = totalRelevance > 0
+    ? Math.round((onTopicMessages / totalRelevance) * 100)
+    : 0;
+
+  if (totalMessages === 0) {
     return (
-      <div className="metrics-container">
-        <div className="metrics-placeholder">
-          <p>No metrics available yet. Send a message to see quality metrics.</p>
-        </div>
+      <div className="metrics-container empty">
+        <p className="metrics-empty">No messages yet</p>
       </div>
     );
   }
 
-  const MetricBar = ({ label, value, icon: IconComponent, color }) => {
-    const percentage = value ? (value * 100).toFixed(1) : 0;
-    
-    return (
-      <div className="metric-item">
-        <div className="metric-header">
-          <IconComponent className="metric-icon" />
-          <span className="metric-label">{label}</span>
-          <span className="metric-percentage">{percentage}%</span>
-        </div>
-        <div className="metric-bar-container">
-          <div 
-            className={`metric-bar ${color}`}
-            style={{ width: `${percentage}%` }}
-          ></div>
-        </div>
-      </div>
-    );
-  };
-
-  const getQualityColor = (value) => {
-    if (!value && value !== 0) return 'unknown';
-    if (value >= 0.8) return 'excellent';
-    if (value >= 0.6) return 'good';
-    if (value >= 0.4) return 'fair';
-    return 'poor';
-  };
-
   return (
     <div className="metrics-container">
-      <div className="metrics-header">
-        <h3>Answer Quality Metrics</h3>
-        <p>Evaluation based on document relevance and answer accuracy</p>
+      <div className="metric-card">
+        <div className="metric-icon">
+          <FiMessageCircle />
+        </div>
+        <div className="metric-content">
+          <div className="metric-label">Messages</div>
+          <div className="metric-value">{totalMessages}</div>
+          <div className="metric-detail">
+            {userMessages} you • {assistantMessages} bot
+          </div>
+        </div>
       </div>
 
-      <div className="metrics-grid">
-        <MetricBar
-          label="Faithfulness"
-          value={metrics.faithfulness}
-          icon={FiCheck}
-          color={getQualityColor(metrics.faithfulness)}
-        />
-        <MetricBar
-          label="Answer Relevancy"
-          value={metrics.answer_relevancy}
-          icon={FiTarget}
-          color={getQualityColor(metrics.answer_relevancy)}
-        />
-        <MetricBar
-          label="Context Precision"
-          value={metrics.context_precision}
-          icon={FiEye}
-          color={getQualityColor(metrics.context_precision)}
-        />
-        <MetricBar
-          label="Overall Quality"
-          value={metrics.overall}
-          icon={FiStar}
-          color={getQualityColor(metrics.overall)}
-        />
+      <div className="metric-card">
+        <div className="metric-icon">
+          <FiZap />
+        </div>
+        <div className="metric-content">
+          <div className="metric-label">Tokens</div>
+          <div className="metric-value">{totalTokens.toLocaleString()}</div>
+          <div className="metric-detail">
+            {totalTokens > 0 ? `${(totalTokens / totalMessages).toFixed(0)} avg` : 'N/A'}
+          </div>
+        </div>
       </div>
 
-      {/* Info Section */}
-      {(metrics.num_docs !== undefined || metrics.is_on_topic !== undefined) && (
-        <div className="metrics-info">
-          {metrics.num_docs !== undefined && (
-            <div className="info-row">
-              <span className="info-label">Documents Retrieved</span>
-              <span className="info-value">{metrics.num_docs}</span>
+      {totalRelevance > 0 && (
+        <div className="metric-card">
+          <div className="metric-icon">
+            <FiCheck />
+          </div>
+          <div className="metric-content">
+            <div className="metric-label">Relevance</div>
+            <div className="metric-value">{relevancePercent}%</div>
+            <div className="metric-detail">
+              {onTopicMessages} on-topic • {offTopicMessages} off-topic
             </div>
-          )}
-          {metrics.is_on_topic !== undefined && (
-            <div className="info-row">
-              <span className="info-label">On-Topic</span>
-              <span className={`info-value ${metrics.is_on_topic ? 'on-topic' : 'off-topic'}`}>
-                {metrics.is_on_topic ? 'Yes' : 'No'}
-              </span>
+            <div className="metric-bar">
+              <div
+                className="metric-bar-fill"
+                style={{ width: `${relevancePercent}%` }}
+              ></div>
             </div>
-          )}
+          </div>
         </div>
       )}
-
-      {/* Legend */}
-      <div className="metrics-legend">
-        <div className="legend-item">
-          <span className="legend-dot excellent"></span>
-          <span>Excellent (80-100%)</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-dot good"></span>
-          <span>Good (60-80%)</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-dot fair"></span>
-          <span>Fair (40-60%)</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-dot poor"></span>
-          <span>Poor (&lt;40%)</span>
-        </div>
-      </div>
     </div>
   );
 }

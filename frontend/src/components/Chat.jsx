@@ -22,7 +22,6 @@ function Chat({ onSessionChange, onNavigateToSessions }) {
     error: persistenceError,
     addUserMessage,
     addAssistantMessage,
-    getConversationHistory,
     createNewSession,
     getTotalTokens
   } = useChatPersistence();
@@ -71,7 +70,7 @@ function Chat({ onSessionChange, onNavigateToSessions }) {
       await addUserMessage(userMessage);
 
       // Get conversation history for context
-      const conversationHistory = getConversationHistory();
+      const conversationHistory = api.getConversationHistory();
 
       // Send to RAG API
       const response = await api.query(userMessage, conversationHistory);
